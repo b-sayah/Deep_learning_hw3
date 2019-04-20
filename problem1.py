@@ -60,8 +60,6 @@ def js_divergence(p, q, m_minibatch=1000):
     y_q = torch.Tensor(y_q)
 
     Discrim = jsd_mlp(input_dim=x_p.size()[1])
-    # optimizer_D = torch.optim.Adagrad(D.parameters())
-    # optimizer_D = torch.optim.Adam(D.parameters())
     optimizer_D = torch.optim.Adagrad(Discrim.parameters())
     Discrim.zero_grad()
 
@@ -71,25 +69,23 @@ def js_divergence(p, q, m_minibatch=1000):
         jsd_loss.backward(torch.FloatTensor([-1]))
         optimizer_D.step()
 
-    jsd_expected = jsd_objective(Discrim, x_p, y_q)
-    return Discrim, jsd_expected
+    jsd_exp = jsd_objective(Discrim, x_p, y_q)
+    return Discrim, jsd_exp
 
 
-def Gradient_Penalty(MLP, x_p, y_q):
-    # interpolation
-    alfa = torch.rand(x_p.shape[0], 1)
-    alfa = alfa.expand(-1, MLP.input_dim)
+def gradient_penalty(MLP, x_p, y_q):
+    alfa = x_p.size()[0]
+    alfa = torch.rand(alfa, 1)
+    alfa.expand_as(x_p)
 
     interpolation = Variable(alfa * x_p + (1 - alfa) * y_q, requires_grad=True)
 
     inputs = interpolation
     outputs = MLP(interpolation)
-    # Gradients calculation
+
     gradients = grad(outputs, inputs, torch.ones(outputs.size()),
                      retain_graph=True, create_graph=True, only_inputs=True)[0]
 
-    # Mean/Expectation of gradients
-    # gradients = gradients.view(gradients.size(0),  -1)
     gradients = gradients.view(gradients.size(0), -1)
     gradients_norm = gradients.norm(2, dim=1)
 
