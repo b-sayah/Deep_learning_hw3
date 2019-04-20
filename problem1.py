@@ -113,7 +113,7 @@ def wd_objective(Critic, x_p, y_q):
 
     return wd_objective
 
-def wasserstein_loss(MLP, x_p, y_q, lamda=100):
+def w_distance(p, q, m_minibatch=1000, lamda=10):
     y_1 = MLP(x_p)
     y_2 = MLP(y_q)
 
