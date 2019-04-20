@@ -32,6 +32,18 @@ class MLP(nn.Module):
     def forward(self, x):
         return self.model(x)
 
+
+class jsd_mlp(nn.Module):
+    def __init__(self, input_dim):
+        super(jsd_mlp, self).__init__()
+        self.model = nn.Sequential(
+            MLP(input_dim),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        return self.model(x)
+
 def jsd_loss(MLP, x_p, y_q):
     y_1 = MLP(x_p)  # sigmoid?
     y_2 = MLP(y_q)
