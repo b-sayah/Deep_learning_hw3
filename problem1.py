@@ -135,7 +135,7 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
 
     return Critic, wd - GP
 
-
+"""
 def q1_3():
     metrics = {"JS": [], "WD": []}
     thetas = [-1 + 0.1 * i for i in range(21)]
@@ -151,4 +151,29 @@ def q1_3():
         plt.subplot()
         plt.plot(thetas, values)
         plt.savefig(metric + ".png")
+"""
+#q1.3
+lamda = 10
+m_minibatch = 100
+batch_size = 512
+estimated_jsd = []
+estimated_wd = []
+theta = 1 #
+thetas = np.linspace(-1, 1, 21)
 
+for theta in thetas:
+
+    p = iter(distribution1(0))
+    q = iter(distribution1(thetas))
+
+    Discrim, jsd = js_divergence(p, q, m_minibatch)
+    estimated_jsd.append(jsd)
+
+    Critic, wd = w_distance(p, q, m_minibatch, lamda)
+    estimated_wd.append(wd)
+
+plt.plot(phis, estimated_jsd, label="JSD")
+plt.plot(phis, estimated_wd, label="WD")
+plt.legend()
+plt.show()
+plt.savefig('metric_plots.png')
