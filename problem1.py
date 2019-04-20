@@ -136,5 +136,19 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
     return Critic, wd - GP
 
 
+def q1_3():
+    metrics = {"JS": [], "WD": []}
+    thetas = [-1 + 0.1 * i for i in range(21)]
+    for theta in thetas:
+        p = samplers.distribution1(0)
+        q = samplers.distribution1(theta)
+        D = MLP()
+        for metric, values in metrics.items():
+            values.append(- D.fit(p, q, metric))  # TODO IMPLEMENT
 
+    for metric, values in metrics.items():
+        plt.figure(figsize=(8, 4))
+        plt.subplot()
+        plt.plot(thetas, values)
+        plt.savefig(metric + ".png")
 
