@@ -114,12 +114,24 @@ def wd_objective(Critic, x_p, y_q):
     return wd_objective
 
 def w_distance(p, q, m_minibatch=1000, lamda=10):
-    y_1 = MLP(x_p)
-    y_2 = MLP(y_q)
+    x_p = next(p)
+    y_q = next(q)
 
-    GP = Gradient_Penalty(MLP, x_p, y_q)
+    Critic = MLP(input_dim=x_p.size()[1])
+    optimizer_T = torch.optim.SGD(T.parameters(), lr=1e-3)
+    Critic.zero_grad()
+    for mini_batch in range(m_minibatch):
 
-    return -(y_1.mean() - y_2.mean() - lamda * GP.mean())
+        wd = wd_objective(Critic, x_p, y_q)
+        wd_loss = wd - gradient_penalty(Critic, x_p, y_q, lamda)
+
+        wd_loss.backward(torch.FloatTensor([-1]))
+        optimizer_T.step()
+
+    wd = wd_objective(Critic, x_p, y_q)
+    GP = gradient_penalty(Critic, x_p, y_q, lamda)
+
+    return Critic, wd - GP
 
 
 
