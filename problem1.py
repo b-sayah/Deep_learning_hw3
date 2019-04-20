@@ -35,6 +35,7 @@ class MLP(nn.Module):
 
 class jsd_mlp(nn.Module):
     def __init__(self, input_dim):
+
         super(jsd_mlp, self).__init__()
         self.model = nn.Sequential(
             MLP(input_dim),
@@ -54,6 +55,7 @@ def jsd_objective(Discrim, x_p, y_q):
 
 
 def js_divergence(p, q, m_minibatch=1000):
+
     x_p = next(p)
     y_q = next(q)
     x_p = torch.Tensor(x_p)
@@ -74,6 +76,7 @@ def js_divergence(p, q, m_minibatch=1000):
 
 
 def gradient_penalty(MLP, x_p, y_q):
+
     alfa = x_p.size()[0]
     alfa = torch.rand(alfa, 1)
     alfa.expand_as(x_p)
@@ -91,6 +94,24 @@ def gradient_penalty(MLP, x_p, y_q):
     GP = lamda * ((gradient_norm - 1) ** 2).mean()
     return GP
 
+
+class wd_mlp(nn.Module):
+    def __init__(self, input_dim):
+        super(wd_mlp, self).__init__()
+        self.model = nn.Sequential(
+            MLP(input_dim),
+            nn.LeakyReLU()
+        )
+
+    def forward(self, x):
+        return self.model(x)
+
+
+def wd_objective(Critic, x_p, y_q):
+
+    wd_objective = Critic(x_p).mean() - Critic(y_q).mean()
+
+    return wd_objective
 
 def wasserstein_loss(MLP, x_p, y_q, lamda=100):
     y_1 = MLP(x_p)
