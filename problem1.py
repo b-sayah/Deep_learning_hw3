@@ -12,10 +12,25 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torch.autograd import grad
 import matplotlib.pyplot as plt
-from scipy.spatial import distance
+#from scipy.spatial import distance
 
 import samplers
 
+class MLP(nn.Module):
+    def __init__(self, input_dim):
+        super(MLP, self).__init__()
+
+        self.model = nn.Sequential(
+            nn.Linear(input_dim, 32),
+            nn.LeakyReLU(),
+            nn.Linear(32, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, 1),
+
+        )
+
+    def forward(self, x):
+        return self.model(x)
 
 def jsd_loss(MLP, x_p, y_q):
     y_1 = MLP(x_p)  # sigmoid?
@@ -69,13 +84,5 @@ def wasserstein_loss(MLP, x_p, y_q, lamda=100):
     return -(y_1.mean() - y_2.mean() - lamda * GP.mean())
 
 
-class MLP(nn.Module):
-    def __init__(self, input_size):
-        super(MLP, self).__init__()
-        self.model = nn.Sequential(
 
-        )
-
-    def forward(self, x):
-        return self.model(x)
 
