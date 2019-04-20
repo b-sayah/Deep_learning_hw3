@@ -44,11 +44,13 @@ class jsd_mlp(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-def jsd_loss(MLP, x_p, y_q):
-    y_1 = MLP(x_p)  # sigmoid?
-    y_2 = MLP(y_q)
 
-    return - (np.log(2) + torch.mean(torch.log(y_2)) / 2 + torch.mean(torch.log(1 - y_1)) / 2)
+def jsd_objective(Discrim, x_p, y_q):
+
+    jsd_objective = torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(
+        1 - Discrim(y_q)).mean()
+
+    return jsd_objective
 
 
 def js_divergence(x_p, y_q):
