@@ -78,24 +78,18 @@ def gradient_penalty(MLP, x_p, y_q):
     alfa = torch.rand(alfa, 1)
     alfa.expand_as(x_p)
 
-    interpolation = Variable(alfa * x_p + (1 - alfa) * y_q, requires_grad=True)
+    interpolate_z = Variable(alfa * x_p + (1 - alfa) * y_q, requires_grad=True)
 
-    inputs = interpolation
-    outputs = MLP(interpolation)
+    inputs = interpolate_z
+    outputs = Critic(interpolate_z)
 
-    gradients = grad(outputs, inputs, torch.ones(outputs.size()),
-                     retain_graph=True, create_graph=True, only_inputs=True)[0]
+    gradients = grad(outputs, inputs, torch.ones(Critic(interpolate_z).size()),
+                     create_graph=True, retain_graph=True, only_inputs=True)[0]
 
-    gradients = gradients.view(gradients.size(0), -1)
-    gradients_norm = gradients.norm(2, dim=1)
-
-    # TO DO check it again if we really need this, square root to manually calculate norm+epsilon
-    gradients_norm = torch.sqrt(torch.sum(gradients_norm) + 1e-3)
-
-    # mean?
-    gradient_penalty = (gradients_norm - 1) ** 2
-
-    return gradient_penalty
+    # gradients = gradients.view(gradients.size(0),  -1)
+    gradient_norm = gradients.norm(2, dim=1)
+    GP = lamda * ((gradient_norm - 1) ** 2).mean()
+    return GP
 
 
 def wasserstein_loss(MLP, x_p, y_q, lamda=100):
