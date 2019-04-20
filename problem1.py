@@ -116,6 +116,8 @@ def wd_objective(Critic, x_p, y_q):
 def w_distance(p, q, m_minibatch=1000, lamda=10):
     x_p = next(p)
     y_q = next(q)
+    x_p = torch.Tensor(x_p)
+    y_q = torch.Tensor(y_q)
 
     Critic = MLP(input_dim=x_p.size()[1])
     optimizer_T = torch.optim.SGD(T.parameters(), lr=1e-3)
