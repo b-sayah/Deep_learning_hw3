@@ -53,13 +53,26 @@ def jsd_objective(Discrim, x_p, y_q):
     return jsd_objective
 
 
-def js_divergence(x_p, y_q):
-    r = (x_p + y_q) / 2
+def js_divergence(p, q, m_minibatch=1000):
+    x_p = next(p)
+    y_q = next(q)
+    x_p = torch.Tensor(x_p)
+    y_q = torch.Tensor(y_q)
 
-    D1 = x_p * np.log(x_p / r)
-    D2 = y_q * np.log(y_q / r)
+    Discrim = jsd_mlp(input_dim=x_p.size()[1])
+    # optimizer_D = torch.optim.Adagrad(D.parameters())
+    # optimizer_D = torch.optim.Adam(D.parameters())
+    optimizer_D = torch.optim.Adagrad(Discrim.parameters())
+    Discrim.zero_grad()
 
-    return (np.sum(D1 + D2)) / 2
+    for mini_batch in range(m_minibatch):
+        jsd_loss = jsd_objective(Discrim, x_p, y_q)
+
+        jsd_loss.backward(torch.FloatTensor([-1]))
+        optimizer_D.step()
+
+    jsd_expected = jsd_objective(Discrim, x_p, y_q)
+    return Discrim, jsd_expected
 
 
 def Gradient_Penalty(MLP, x_p, y_q):
