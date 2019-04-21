@@ -129,21 +129,42 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
 
     return Critic, wd - GP
 
-"""
-def q1_3():
-    metrics = {"JS": [], "WD": []}
-    thetas = [-1 + 0.1 * i for i in range(21)]
-    for theta in thetas:
-        p = samplers.distribution1(0)
-        q = samplers.distribution1(theta)
-        D = MLP()
-        for metric, values in metrics.items():
-            values.append(- D.fit(p, q, metric))  # TODO IMPLEMENT
 
-    for metric, values in metrics.items():
-        plt.figure(figsize=(8, 4))
-        plt.subplot()
-        plt.plot(thetas, values)
-        plt.savefig(metric + ".png")
-"""
-#q1.3
+####### Q1.3########
+
+Phi_values = [-1 + 0.1 * i for i in range(21)]
+
+estimated_jsd, estimated_wd = [], []
+# estimated_wd = []
+
+m_minibatch = 1000
+batch_size = 512
+lamda = 10
+
+################### TO DO CHECK THIS PART
+for Phi in Phi_values:
+    # TO DO
+    dist_p = distribution1(0, batch_size)
+
+    dist_q = distribution1(Phi, batch_size)
+
+    Discrim, jsd = js_divergence(dist_p, dist_q, m_minibatch)
+    estimated_jsd.append(jsd)
+
+    Critic, wd = w_distance(dist_p, dist_q, m_minibatch, lamda)
+    estimated_wd.append(wd)
+
+    print(f"Phi: {Phi:.2f}  estimated JSD: {jsd.item():.6f}  estimated WD: {wd.item():.6f}")  # TO DO
+# print(f"estimated JSD: {jsd.item()} estimated WD: {wd.item()}")
+
+
+plt.figure(figsize=(8, 4))
+plt.plot(Phi_values, estimated_jsd)
+plt.plot(Phi_values, estimated_wd)
+plt.title('JSD and WD in terms of phi')
+plt.xlabel('Phi values')
+plt.ylabel('estimate')
+plt.legend(["estimated JSD", "estimated WD"])
+
+plt.savefig('estimated JSD & WD.png')
+plt.show()
