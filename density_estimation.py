@@ -122,7 +122,7 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
     return Critic, wd
 
 
-####### Q1.3########
+# Q1.3
 
 Phi_values = [-1 + 0.1 * i for i in range(21)]
 
@@ -158,6 +158,8 @@ plt.legend(["estimated JSD", "estimated WD"])
 plt.savefig('estimated JSD & WD.png')
 plt.show()
 
+
+# Q1.4
 # plot p0 and p1
 plt.figure()
 
