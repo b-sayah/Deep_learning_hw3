@@ -182,34 +182,26 @@ plt.plot(xx, N(xx))
 #######--- INSERT YOUR CODE BELOW ---#######
  
 
+batch_size = 512# 10240
+m_minibatch = 100 #1000
+f0 = iter(distribution3(batch_size))
+f1 = iter(distribution4(batch_size))
 
-
-
-
-
-
-
-
-
-
-
-
-
+Discrim, jsd = js_divergence(f1, f0, m_minibatch)
 
 
 ############### plotting things
 ############### (1) plot the output of your trained discriminator 
 ############### (2) plot the estimated density contrasted with the true density
 
-
-
-r = xx # evaluate xx using your discriminator; replace xx with the output
+# evaluate xx using your discriminator; replace xx with the outpu
+r = Discrim(torch.Tensor(xx).unsqueeze(dim=1)).detach().numpy().reshape(-1)
 plt.figure(figsize=(8,4))
 plt.subplot(1,2,1)
 plt.plot(xx,r)
 plt.title(r'$D(x)$')
 
-estimate = np.ones_like(xx)*0.2 # estimate the density of distribution4 (on xx) using the discriminator; 
+estimate = estimate = N(xx) * r/(1-r)# estimate the density of distribution4 (on xx) using the discriminator;
                                 # replace "np.ones_like(xx)*0." with your estimate
 plt.subplot(1,2,2)
 plt.plot(xx,estimate)
