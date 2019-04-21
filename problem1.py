@@ -72,37 +72,42 @@ class jsd_mlp(nn.Module):
     def forward(self, x):
         return self.model(x)
 
+#Q1.1
 def js_divergence(p, q, m_minibatch=1000):
-
     x_p = next(p)
     y_q = next(q)
     x_p = torch.Tensor(x_p)
     y_q = torch.Tensor(y_q)
 
-    Discrim = jsd_mlp(input_dim=x_p.size()[1])
+    Discrim = jsd_mlp(input_dim=x_p.size()[1], hidden_dim=32)
+    # optimizer_D = torch.optim.Adagrad(D.parameters())
+    # optimizer_D = torch.optim.Adam(D.parameters())
     optimizer_D = torch.optim.Adagrad(Discrim.parameters())
-    Discrim.zero_grad()
 
     for mini_batch in range(m_minibatch):
+        optimizer_D.zero_grad()
         jsd_loss = jsd_objective(Discrim, x_p, y_q)
 
         jsd_loss.backward(torch.FloatTensor([-1]))
         optimizer_D.step()
 
-    jsd_exp = jsd_objective(Discrim, x_p, y_q)
-    return Discrim, jsd_exp
+    jsd = jsd_objective(Discrim, x_p, y_q)
+    return Discrim, jsd
 
+#Q1.2
 def w_distance(p, q, m_minibatch=1000, lamda=10):
     x_p = next(p)
     y_q = next(q)
     x_p = torch.Tensor(x_p)
     y_q = torch.Tensor(y_q)
 
-    Critic = MLP(input_dim=x_p.size()[1])
-    optimizer_T = torch.optim.SGD(T.parameters(), lr=1e-3)
-    Critic.zero_grad()
-    for mini_batch in range(m_minibatch):
+    Critic = MLP(input_dim=x_p.size()[1], hidden_dim=64)
+    # optimizer_T = torch.optim.SGD(T.parameters(), lr=1e-3)
+    # optimizer_T = torch.optim.Adam(T.parameters())
+    optimizer_T = torch.optim.Adagrad(Critic.parameters())
 
+    for mini_batch in range(m_minibatch):
+        optimizer_T.zero_grad()
         wd = wd_objective(Critic, x_p, y_q)
         wd_loss = wd - gradient_penalty(Critic, x_p, y_q, lamda)
 
@@ -111,8 +116,8 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
 
     wd = wd_objective(Critic, x_p, y_q)
     GP = gradient_penalty(Critic, x_p, y_q, lamda)
-
-    return Critic, wd - GP
+    wd = wd - GP
+    return Critic, wd
 
 
 ####### Q1.3########
@@ -120,13 +125,12 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
 Phi_values = [-1 + 0.1 * i for i in range(21)]
 
 estimated_jsd, estimated_wd = [], []
-# estimated_wd = []
 
 m_minibatch = 1000
 batch_size = 512
 lamda = 10
 
-################### TO DO CHECK THIS PART
+
 for Phi in Phi_values:
     # TO DO
     dist_p = distribution1(0, batch_size)
@@ -140,8 +144,6 @@ for Phi in Phi_values:
     estimated_wd.append(wd)
 
     print(f"Phi: {Phi:.2f}  estimated JSD: {jsd.item():.6f}  estimated WD: {wd.item():.6f}")  # TO DO
-# print(f"estimated JSD: {jsd.item()} estimated WD: {wd.item()}")
-
 
 plt.figure(figsize=(8, 4))
 plt.plot(Phi_values, estimated_jsd)
