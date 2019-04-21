@@ -1,33 +1,30 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-from __future__ import print_function
-import numpy as np
 import torch
 import torch.nn as nn
+import torch.optim
 from torch.autograd import Variable
 from torch.autograd import grad
-
+import numpy as np
+import sys
 from samplers import *
 
 import matplotlib.pyplot as plt
 
-
+#Utils function
 
 def jsd_objective(Discrim, x_p, y_q):
-
     jsd_objective = torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(
         1 - Discrim(y_q)).mean()
 
     return jsd_objective
 
-def wd_objective(Critic, x_p, y_q):
 
+def wd_objective(Critic, x_p, y_q):
     wd_objective = Critic(x_p).mean() - Critic(y_q).mean()
 
     return wd_objective
 
-def gradient_penalty(MLP, x_p, y_q):
 
+def gradient_penalty(Critic, x_p, y_q, lamda):
     alfa = x_p.size()[0]
     alfa = torch.rand(alfa, 1)
     alfa.expand_as(x_p)
@@ -40,24 +37,24 @@ def gradient_penalty(MLP, x_p, y_q):
     gradients = grad(outputs, inputs, torch.ones(Critic(interpolate_z).size()),
                      create_graph=True, retain_graph=True, only_inputs=True)[0]
 
-    # gradients = gradients.view(gradients.size(0),  -1)
     gradient_norm = gradients.norm(2, dim=1)
+
     GP = lamda * ((gradient_norm - 1) ** 2).mean()
     return GP
 
+
 class MLP(nn.Module):
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, hidden_dim):
         super(MLP, self).__init__()
 
         self.model = nn.Sequential(
-            nn.Linear(input_dim, 32),
+            nn.Linear(input_dim, hidden_dim),
             nn.LeakyReLU(),
-            nn.Linear(32, 64),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.LeakyReLU(),
-            nn.Linear(64, 128),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.LeakyReLU(),
-            nn.Linear(128, 1),
-
+            nn.Linear(hidden_dim, 1),
         )
 
     def forward(self, x):
@@ -65,23 +62,11 @@ class MLP(nn.Module):
 
 
 class jsd_mlp(nn.Module):
-    def __init__(self, input_dim):
-
+    def __init__(self, input_dim, hidden_dim):
         super(jsd_mlp, self).__init__()
         self.model = nn.Sequential(
-            MLP(input_dim),
+            MLP(input_dim, hidden_dim),
             nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        return self.model(x)
-
-class wd_mlp(nn.Module):
-    def __init__(self, input_dim):
-        super(wd_mlp, self).__init__()
-        self.model = nn.Sequential(
-            MLP(input_dim),
-            F.ReLU()
         )
 
     def forward(self, x):
