@@ -93,8 +93,8 @@ def js_divergence(p, q, m_minibatch=1000):
         jsd_loss.backward(torch.FloatTensor([-1]))
         optimizer_D.step()
 
-    jsd = jsd_objective(Discrim, x_p, y_q)
-    return Discrim, jsd
+    #jsd = jsd_objective(Discrim, x_p, y_q)
+    return Discrim, jsd_objective(Discrim, x_p, y_q)
 
 #Q1.2
 def w_distance(p, q, m_minibatch=1000, lamda=10):
@@ -116,10 +116,10 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
         wd_loss.backward(torch.FloatTensor([-1]))
         optimizer_T.step()
 
-    wd = wd_objective(Critic, x_p, y_q)
-    GP = gradient_penalty(Critic, x_p, y_q, lamda)
-    wd = wd - GP
-    return Critic, wd
+    #wd = wd_objective(Critic, x_p, y_q)
+    #GP = gradient_penalty(Critic, x_p, y_q, lamda)
+    #wd = wd - GP
+    return Critic, wd_objective(Critic, x_p, y_q) - gradient_penalty(Critic, x_p, y_q, lamda)
 
 
 # Q1.3
