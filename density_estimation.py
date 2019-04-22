@@ -28,8 +28,8 @@ def wd_objective(Critic, x_p, y_q):
 
 def gradient_penalty(Critic, x_p, y_q, lamda):
     alfa = x_p.size()[0]
-    alfa = torch.rand(alfa, 1)
-    alfa.expand_as(x_p)
+    alfa = torch.rand(alfa, 1, device=x_p.device)
+    alfa = alfa.expand_as(x_p)
 
     interpolate_z = Variable(alfa * x_p + (1 - alfa) * y_q, requires_grad=True)
 
