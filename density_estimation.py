@@ -15,17 +15,16 @@ import matplotlib.pyplot as plt
 
 def jsd_objective(Discrim, x_p, y_q):
 
-    jsd_objective = torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(
-        1 - Discrim(y_q)).mean()
+    #jsd_objectiv = torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(1 - Discrim(y_q)).mean()
 
-    return jsd_objective
+    return torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(1 - Discrim(y_q)).mean()
 
 
 def wd_objective(Critic, x_p, y_q):
 
-    wd_objective = Critic(x_p).mean() - Critic(y_q).mean()
+    #wd_objectiv = Critic(x_p).mean() - Critic(y_q).mean()
 
-    return wd_objective
+    return Critic(x_p).mean() - Critic(y_q).mean()
 
 
 def gradient_penalty(Critic, x_p, y_q, lamda):
@@ -113,7 +112,7 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
     for mini_batch in range(m_minibatch):
         optimizer_T.zero_grad()
         wd = wd_objective(Critic, x_p, y_q)
-        wd_loss = wd - gradient_penalty(Critic, x_p, y_q, lamda)
+        wd_loss = wd - gradient_penalty(Critic, x_p, y_q, lamda=10)
 
         wd_loss.backward(torch.FloatTensor([-1]))
         optimizer_T.step()
@@ -130,21 +129,21 @@ Phi_values = [-1 + 0.1 * i for i in range(21)]
 
 estimated_jsd, estimated_wd = [], []
 
-m_minibatch = 1000
-batch_size = 512
-lamda = 10
+#m_minibatch = 1000
+#batch_size = 512
+#lamda = 10
 
 
 for Phi in Phi_values:
     # TO DO
-    dist_p = distribution1(0, batch_size)
+    dist_p = distribution1(0, batch_size=512)
 
-    dist_q = distribution1(Phi, batch_size)
+    dist_q = distribution1(Phi, batch_size=512)
 
-    Discrim, jsd = js_divergence(dist_p, dist_q, m_minibatch)
+    Discrim, jsd = js_divergence(dist_p, dist_q, m_minibatch=1000)
     estimated_jsd.append(jsd)
 
-    Critic, wd = w_distance(dist_p, dist_q, m_minibatch, lamda)
+    Critic, wd = w_distance(dist_p, dist_q, m_minibatch=1000, lamda=10)
     estimated_wd.append(wd)
 
     print(f"Phi: {Phi:.2f}  estimated JSD: {jsd.item():.6f}  estimated WD: {wd.item():.6f}")  # TO DO
@@ -191,7 +190,6 @@ f1 = q_iter
 Discrim, jsd = js_divergence(f1, fo, m_minibatch)
 Discrim = Discrim(torch.Tensor(xx).unsqueeze(dim=1))
 r = Discrim.detach().numpy().reshape(-1)
-r = Discrim(torch.Tensor(xx).unsqueeze(dim=1)).detach().numpy().reshape(-1)
 
 plt.figure(figsize=(8,4))
 plt.subplot(1,2,1)
@@ -205,14 +203,3 @@ plt.plot(xx,estimate)
 plt.plot(f(torch.from_numpy(xx)).numpy(), d(torch.from_numpy(xx)).numpy()**(-1)*N(xx))
 plt.legend(['Estimated','True'])
 plt.title('Estimated vs True')
-
-
-
-
-
-
-
-
-
-
-
