@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 #Utils function
 
 def jsd_objective(Discrim, x_p, y_q):
+
     jsd_objective = torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(
         1 - Discrim(y_q)).mean()
 
@@ -21,6 +22,7 @@ def jsd_objective(Discrim, x_p, y_q):
 
 
 def wd_objective(Critic, x_p, y_q):
+
     wd_objective = Critic(x_p).mean() - Critic(y_q).mean()
 
     return wd_objective
@@ -74,7 +76,8 @@ class jsd_mlp(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-#Q1.1
+########### Question 1.1 ############
+
 def js_divergence(p, q, m_minibatch=1000):
     x_p = next(p)
     y_q = next(q)
@@ -82,8 +85,7 @@ def js_divergence(p, q, m_minibatch=1000):
     y_q = torch.Tensor(y_q)
 
     Discrim = jsd_mlp(input_dim=x_p.size()[1], hidden_dim=32)
-    # optimizer_D = torch.optim.Adagrad(D.parameters())
-    # optimizer_D = torch.optim.Adam(D.parameters())
+
     optimizer_D = torch.optim.Adagrad(Discrim.parameters())
 
     for mini_batch in range(m_minibatch):
@@ -96,7 +98,8 @@ def js_divergence(p, q, m_minibatch=1000):
     #jsd = jsd_objective(Discrim, x_p, y_q)
     return Discrim, jsd_objective(Discrim, x_p, y_q)
 
-#Q1.2
+########### Question 1.2 ############
+
 def w_distance(p, q, m_minibatch=1000, lamda=10):
     x_p = next(p)
     y_q = next(q)
@@ -104,8 +107,7 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
     y_q = torch.Tensor(y_q)
 
     Critic = MLP(input_dim=x_p.size()[1], hidden_dim=64)
-    # optimizer_T = torch.optim.SGD(T.parameters(), lr=1e-3)
-    # optimizer_T = torch.optim.Adam(T.parameters())
+
     optimizer_T = torch.optim.Adagrad(Critic.parameters())
 
     for mini_batch in range(m_minibatch):
@@ -122,7 +124,7 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
     return Critic, wd_objective(Critic, x_p, y_q) - gradient_penalty(Critic, x_p, y_q, lamda)
 
 
-# Q1.3
+########### Question 1.3 ############
 
 Phi_values = [-1 + 0.1 * i for i in range(21)]
 
@@ -159,7 +161,8 @@ plt.savefig('estimated JSD & WD.png')
 plt.show()
 
 
-# Q1.4
+########### Question 1.4 ############
+
 # plot p0 and p1
 plt.figure()
 
@@ -176,35 +179,27 @@ N = lambda x: np.exp(-x**2/2.)/((2*np.pi)**0.5)
 plt.plot(f(torch.from_numpy(xx)).numpy(), d(torch.from_numpy(xx)).numpy()**(-1)*N(xx))
 plt.plot(xx, N(xx))
 
+batch_size = 512
+m_minibatch = 100
 
-############### import the sampler ``samplers.distribution4'' 
-############### train a discriminator on distribution4 and standard gaussian
-############### estimate the density of distribution4
+p_iter = iter(distribution3(batch_size))
+fo = p_iter
 
-#######--- INSERT YOUR CODE BELOW ---#######
- 
+q_iter = iter(distribution4(batch_size))
+f1 = q_iter
 
-batch_size = 512# 10240
-m_minibatch = 100 #1000
-f0 = iter(distribution3(batch_size))
-f1 = iter(distribution4(batch_size))
-
-Discrim, jsd = js_divergence(f1, f0, m_minibatch)
-
-
-############### plotting things
-############### (1) plot the output of your trained discriminator 
-############### (2) plot the estimated density contrasted with the true density
-
-# evaluate xx using your discriminator; replace xx with the outpu
+Discrim, jsd = js_divergence(f1, fo, m_minibatch)
+Discrim = Discrim(torch.Tensor(xx).unsqueeze(dim=1))
+r = Discrim.detach().numpy().reshape(-1)
 r = Discrim(torch.Tensor(xx).unsqueeze(dim=1)).detach().numpy().reshape(-1)
+
 plt.figure(figsize=(8,4))
 plt.subplot(1,2,1)
 plt.plot(xx,r)
 plt.title(r'$D(x)$')
 
 estimate = estimate = N(xx) * r/(1-r)# estimate the density of distribution4 (on xx) using the discriminator;
-                                # replace "np.ones_like(xx)*0." with your estimate
+
 plt.subplot(1,2,2)
 plt.plot(xx,estimate)
 plt.plot(f(torch.from_numpy(xx)).numpy(), d(torch.from_numpy(xx)).numpy()**(-1)*N(xx))
