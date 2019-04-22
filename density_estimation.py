@@ -6,7 +6,7 @@ import torch.optim
 from torch.autograd import Variable
 from torch.autograd import grad
 import numpy as np
-import sys
+
 from samplers import *
 
 import matplotlib.pyplot as plt
@@ -14,23 +14,17 @@ import matplotlib.pyplot as plt
 #Utils function
 
 def jsd_objective(Discrim, x_p, y_q):
-
-    #jsd_objectiv = torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(1 - Discrim(y_q)).mean()
-
     return torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(1 - Discrim(y_q)).mean()
 
 
 def wd_objective(Critic, x_p, y_q):
-
-    #wd_objectiv = Critic(x_p).mean() - Critic(y_q).mean()
-
     return Critic(x_p).mean() - Critic(y_q).mean()
 
 
 def gradient_penalty(Critic, x_p, y_q, lamda):
     alfa = x_p.size()[0]
     alfa = torch.rand(alfa, 1, device=x_p.device)
-    alfa = alfa.expand_as(x_p)
+    alfa.expand_as(x_p)
 
     interpolate_z = Variable(alfa * x_p + (1 - alfa) * y_q, requires_grad=True)
 
@@ -47,17 +41,17 @@ def gradient_penalty(Critic, x_p, y_q, lamda):
 
 
 class MLP(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
+    def __init__(self, input_dim):
         super(MLP, self).__init__()
 
         self.model = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
+            nn.Linear(input_dim, 64),
             nn.LeakyReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(64, 128),
             nn.LeakyReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(128, 128),
             nn.LeakyReLU(),
-            nn.Linear(hidden_dim, 1),
+            nn.Linear(128, 1),
         )
 
     def forward(self, x):
@@ -65,10 +59,10 @@ class MLP(nn.Module):
 
 
 class jsd_mlp(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
+    def __init__(self, input_dim):
         super(jsd_mlp, self).__init__()
         self.model = nn.Sequential(
-            MLP(input_dim, hidden_dim),
+            MLP(input_dim),
             nn.Sigmoid()
         )
 
@@ -83,7 +77,7 @@ def js_divergence(p, q, m_minibatch=1000):
     x_p = torch.Tensor(x_p)
     y_q = torch.Tensor(y_q)
 
-    Discrim = jsd_mlp(input_dim=x_p.size()[1], hidden_dim=32)
+    Discrim = jsd_mlp(input_dim=x_p.size()[1])
 
     optimizer_D = torch.optim.Adagrad(Discrim.parameters())
 
@@ -94,7 +88,6 @@ def js_divergence(p, q, m_minibatch=1000):
         jsd_loss.backward(torch.FloatTensor([-1]))
         optimizer_D.step()
 
-    #jsd = jsd_objective(Discrim, x_p, y_q)
     return Discrim, jsd_objective(Discrim, x_p, y_q)
 
 ########### Question 1.2 ############
@@ -105,7 +98,7 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
     x_p = torch.Tensor(x_p)
     y_q = torch.Tensor(y_q)
 
-    Critic = MLP(input_dim=x_p.size()[1], hidden_dim=64)
+    Critic = MLP(input_dim=x_p.size()[1])
 
     optimizer_T = torch.optim.Adagrad(Critic.parameters())
 
@@ -117,9 +110,6 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
         wd_loss.backward(torch.FloatTensor([-1]))
         optimizer_T.step()
 
-    #wd = wd_objective(Critic, x_p, y_q)
-    #GP = gradient_penalty(Critic, x_p, y_q, lamda)
-    #wd = wd - GP
     return Critic, wd_objective(Critic, x_p, y_q) - gradient_penalty(Critic, x_p, y_q, lamda)
 
 
@@ -128,11 +118,6 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
 Phi_values = [-1 + 0.1 * i for i in range(21)]
 
 estimated_jsd, estimated_wd = [], []
-
-#m_minibatch = 1000
-#batch_size = 512
-#lamda = 10
-
 
 for Phi in Phi_values:
     # TO DO
