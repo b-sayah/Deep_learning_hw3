@@ -13,18 +13,21 @@ import matplotlib.pyplot as plt
 
 #Utils function
 
+#calculation of the jensen shannon divergence objective function
 def jsd_objective(Discrim, x_p, y_q):
-    return torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(1 - Discrim(y_q)).mean()
+    jsd_objectiv = torch.log(torch.Tensor([2])) + 0.5 * torch.log(Discrim(x_p)).mean() + 0.5 * torch.log(1 - Discrim(y_q)).mean()
+    return jsd_objectiv
 
-
+#calculation of the wasserstein distance objective function
 def wd_objective(Critic, x_p, y_q):
-    return Critic(x_p).mean() - Critic(y_q).mean()
+    wd_objectiv = Critic(x_p).mean() - Critic(y_q).mean()
+    return wd_objectiv
 
-
+# inspired by https://github.com/EmilienDupont/wgan-gp/blob/master/training.py
 def gradient_penalty(Critic, x_p, y_q, lamda):
     alfa = x_p.size()[0]
     alfa = torch.rand(alfa, 1, device=x_p.device)
-    alfa.expand_as(x_p)
+    alfa = alfa.expand_as(x_p)
 
     interpolate_z = Variable(alfa * x_p + (1 - alfa) * y_q, requires_grad=True)
 
@@ -57,7 +60,7 @@ class MLP(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-
+# JSD based on the MLP with sigmoid at the output
 class jsd_mlp(nn.Module):
     def __init__(self, input_dim):
         super(jsd_mlp, self).__init__()
@@ -87,8 +90,8 @@ def js_divergence(p, q, m_minibatch=1000):
 
         jsd_loss.backward(torch.FloatTensor([-1]))
         optimizer_D.step()
-
-    return Discrim, jsd_objective(Discrim, x_p, y_q)
+    Jsd = jsd_objective(Discrim, x_p, y_q)
+    return Discrim, Jsd
 
 ########### Question 1.2 ############
 
@@ -97,7 +100,7 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
     y_q = next(q)
     x_p = torch.Tensor(x_p)
     y_q = torch.Tensor(y_q)
-
+    # based on mlp with no activation added
     Critic = MLP(input_dim=x_p.size()[1])
 
     optimizer_T = torch.optim.Adagrad(Critic.parameters())
@@ -109,8 +112,10 @@ def w_distance(p, q, m_minibatch=1000, lamda=10):
 
         wd_loss.backward(torch.FloatTensor([-1]))
         optimizer_T.step()
-
-    return Critic, wd_objective(Critic, x_p, y_q) - gradient_penalty(Critic, x_p, y_q, lamda)
+    Wd =  wd_objective(Critic, x_p, y_q)
+    penalty =  gradient_penalty(Critic, x_p, y_q, lamda)
+    Wd = Wd - penalty
+    return Critic, Wd
 
 
 ########### Question 1.3 ############
@@ -120,7 +125,7 @@ Phi_values = [-1 + 0.1 * i for i in range(21)]
 estimated_jsd, estimated_wd = [], []
 
 for Phi in Phi_values:
-    # TO DO
+
     dist_p = distribution1(0, batch_size=512)
 
     dist_q = distribution1(Phi, batch_size=512)
@@ -180,8 +185,8 @@ plt.figure(figsize=(8,4))
 plt.subplot(1,2,1)
 plt.plot(xx,r)
 plt.title(r'$D(x)$')
-
-estimate = estimate = N(xx) * r/(1-r)# estimate the density of distribution4 (on xx) using the discriminator;
+# estimate the density of distribution4 (on xx) using the discriminator;
+estimate = N(xx) * r/(1-r)
 
 plt.subplot(1,2,2)
 plt.plot(xx,estimate)
