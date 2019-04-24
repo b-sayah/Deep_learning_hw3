@@ -5,6 +5,8 @@ import torchvision.transforms as transforms
 import torch
 import classify_svhn
 from classify_svhn import Classifier
+import numpy as np
+from scipy import linalg
 
 SVHN_PATH = "svhn"
 PROCESS_BATCH_SIZE = 32
@@ -69,16 +71,14 @@ def extract_features(classifier, data_loader):
             for i in range(h.shape[0]):
                 yield h[i]
 
-
 def calculate_fid_score(sample_feature_iterator,
                         testset_feature_iterator):
-    """
-    To be implemented by you!
-    """
-    raise NotImplementedError(
-        "TO BE IMPLEMENTED."
-        "Part of Assignment 3 Quantitative Evaluations"
-    )
+    # Get moments
+    sample_features, testset_features = (list(iterator) for iterator in [sample_feature_iterator, testset_feature_iterator])
+    mu_p, mu_q = (np.mean(features, axis=0) for features in [sample_features, testset_features])
+    sigma_p, sigma_q = (np.cov(features, rowvar=False) for features in [sample_features, testset_features])
+
+    return linalg.norm(mu_p - mu_q) + np.trace(sigma_p + sigma_q - 2 * linalg.sqrtm(sigma_p.dot(sigma_q), disp=False)[0].real)
 
 
 if __name__ == "__main__":
